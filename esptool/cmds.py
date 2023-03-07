@@ -92,7 +92,7 @@ def detect_chip(
         detect_port.USES_RFC2217 = True
     detect_port.connect(connect_mode, connect_attempts, detecting=True)
     try:
-        print("Detecting chip type...", end="")
+        #print("Detecting chip type...", end="")
         res = detect_port.check_command(
             "get security info", ESPLoader.ESP_GET_SECURITY_INFO, b""
         )
@@ -115,13 +115,13 @@ def detect_chip(
         # UnsupportedCommmanddError: ESP8266/ESP32 ROM
         # struct.error: ESP32-S2
         # FatalError: ESP8266/ESP32 STUB
-        print(" Unsupported detection protocol, switching and trying again...")
+        #print(" Unsupported detection protocol, switching and trying again...")
         try:
             # ESP32/ESP8266 are reset after an unsupported command, need to reconnect
             # (not needed on ESP32-S2)
             if not isinstance(e, struct.error):
                 detect_port.connect(
-                    connect_mode, connect_attempts, detecting=True, warnings=False
+                    "wdt_reset", connect_attempts, detecting=True, warnings=False
                 )
             print("Detecting chip type...", end="")
             sys.stdout.flush()
