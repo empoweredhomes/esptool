@@ -650,7 +650,7 @@ class ESPLoader(object):
                 itertools.cycle((False, True)),
             ):
                 last_error = self._connect_attempt(
-                    mode="wdt_reset", usb_jtag_serial=usb_jtag_serial, extra_delay=extra_delay
+                    mode=mode, usb_jtag_serial=usb_jtag_serial, extra_delay=extra_delay
                 )
                 if last_error is None:
                     break
