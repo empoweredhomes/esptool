@@ -491,6 +491,9 @@ class ESPLoader(object):
     def _set_mysa_WDT_EN(self, state):
         self._setDTR(not state) #inverted logic on serial port IO -> active low
 
+    def _set_mysa_PRG_EN(self, state):
+        self._setRTS(not state) #inverted logic on serial port IO -> active low
+
     def mysa_WDT_reset(self):
         WDT_ENABLE = False     #To assert wdt in enable mode pin is low
         PROGRAM_ENABLE = False #To assert chip in program mode pin is low
@@ -499,7 +502,6 @@ class ESPLoader(object):
         self._set_mysa_WDT_EN(WDT_ENABLE)
 
         time.sleep(2.0)
-
         self._set_mysa_WDT_EN(not WDT_ENABLE)
         time.sleep(0.1) #issue on some cpus -> https://github.com/empoweredhomes/mysa-esp-idf/commit/d2101cd328f1e589e4c6cd9137c029a64b1bbaa7
         self._set_mysa_PRG_EN(not PROGRAM_ENABLE)
@@ -648,7 +650,7 @@ class ESPLoader(object):
                 itertools.cycle((False, True)),
             ):
                 last_error = self._connect_attempt(
-                    mode=mode, usb_jtag_serial=usb_jtag_serial, extra_delay=extra_delay
+                    mode="wdt_reset", usb_jtag_serial=usb_jtag_serial, extra_delay=extra_delay
                 )
                 if last_error is None:
                     break
