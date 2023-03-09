@@ -77,9 +77,7 @@ def detect_chip(
 ):
     """Use serial access to detect the chip type.
 
-    First, get_security_info command is sent to detect the ID of the chip
-    (supported only by ESP32-C3 and later, works even in the Secure Download Mode).
-    If this fails, we reconnect and fall-back to reading the magic number.
+    First, read the magic number.
     It's mapped at a specific ROM address and has a different value on each chip model.
     This way we use one memory read and compare it to the magic number for each chip.
 
@@ -90,56 +88,33 @@ def detect_chip(
     detect_port = ESPLoader(port, baud, trace_enabled=trace_enabled)
     if detect_port.serial_port.startswith("rfc2217:"):
         detect_port.USES_RFC2217 = True
-    detect_port.connect(connect_mode, connect_attempts, detecting=True)
-    try:
-        print("Detecting chip type...", end="")
-        res = detect_port.check_command(
-            "get security info", ESPLoader.ESP_GET_SECURITY_INFO, b""
-        )
-        # 4b flags, 1b flash_crypt_cnt, 7*1b key_purposes, 4b chip_id
-        res = struct.unpack("<IBBBBBBBBI", res[:16])
-        chip_id = res[9]  # 2/4 status bytes invariant
-
-        for cls in ROM_LIST[3:]:
-            # cmd not supported on ESP8266 and ESP32 + ESP32-S2 doesn't return chip_id
-            if chip_id == cls.IMAGE_CHIP_ID:
-                inst = cls(detect_port._port, baud, trace_enabled=trace_enabled)
-                inst._post_connect()
-                try:
-                    inst.read_reg(
-                        ESPLoader.CHIP_DETECT_MAGIC_REG_ADDR
-                    )  # Dummy read to check Secure Download mode
-                except UnsupportedCommandError:
-                    inst.secure_download_mode = True
-    except (UnsupportedCommandError, struct.error, FatalError) as e:
+    detect_port.connect("wdt_reset", connect_attempts, detecting=True)
         # UnsupportedCommmanddError: ESP8266/ESP32 ROM
         # struct.error: ESP32-S2
         # FatalError: ESP8266/ESP32 STUB
-        print(" Unsupported detection protocol, switching and trying again...")
-        try:
-            # ESP32/ESP8266 are reset after an unsupported command, need to reconnect
-            # (not needed on ESP32-S2)
-            if not isinstance(e, struct.error):
-                detect_port.connect(
-                    connect_mode, connect_attempts, detecting=True, warnings=False
-                )
-            print("Detecting chip type...", end="")
-            sys.stdout.flush()
-            chip_magic_value = detect_port.read_reg(
-                ESPLoader.CHIP_DETECT_MAGIC_REG_ADDR
-            )
+        #print(" Unsupported detection protocol, switching and trying again...")
+    try:
+        # ESP32/ESP8266 are reset after an unsupported command, need to reconnect
+        # (not needed on ESP32-S2)
+        print("Detecting chip type...", end="")
+        sys.stdout.flush()
+        chip_magic_value = detect_port.read_reg(
+            ESPLoader.CHIP_DETECT_MAGIC_REG_ADDR
+        )
 
-            for cls in ROM_LIST:
-                if chip_magic_value in cls.CHIP_DETECT_MAGIC_VALUE:
-                    inst = cls(detect_port._port, baud, trace_enabled=trace_enabled)
-                    inst._post_connect()
-                    inst.check_chip_id()
-        except UnsupportedCommandError:
-            raise FatalError(
-                "Unsupported Command Error received. "
-                "Probably this means Secure Download Mode is enabled, "
-                "autodetection will not work. Need to manually specify the chip."
-            )
+        for cls in ROM_LIST:
+            if chip_magic_value in cls.CHIP_DETECT_MAGIC_VALUE:
+                inst = cls(detect_port._port, baud, trace_enabled=trace_enabled)
+                inst._post_connect()
+                inst.check_chip_id()
+
+    except UnsupportedCommandError:
+        raise FatalError(
+            "Unsupported Command Error received. "
+            "Probably this means Secure Download Mode is enabled, "
+            "autodetection will not work. Need to manually specify the chip."
+        )
+
     finally:
         if inst is not None:
             print(" %s" % inst.CHIP_NAME, end="")

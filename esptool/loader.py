@@ -488,7 +488,25 @@ class ESPLoader(object):
             "using standard reset sequence.".format(active_port)
         )
 
-    def bootloader_reset(self, usb_jtag_serial=False, extra_delay=False):
+    def _set_mysa_WDT_EN(self, state):
+        self._setDTR(not state) #inverted logic on serial port IO -> active low
+
+    def _set_mysa_PRG_EN(self, state):
+        self._setRTS(not state) #inverted logic on serial port IO -> active low
+
+    def mysa_WDT_reset(self):
+        WDT_ENABLE = False     #To assert wdt in enable mode pin is low
+        PROGRAM_ENABLE = False #To assert chip in program mode pin is low
+
+        self._set_mysa_PRG_EN(PROGRAM_ENABLE)
+        self._set_mysa_WDT_EN(WDT_ENABLE)
+
+        time.sleep(2.0)
+        self._set_mysa_WDT_EN(not WDT_ENABLE)
+        time.sleep(0.1) #issue on some cpus -> https://github.com/empoweredhomes/mysa-esp-idf/commit/d2101cd328f1e589e4c6cd9137c029a64b1bbaa7
+        self._set_mysa_PRG_EN(not PROGRAM_ENABLE)
+
+    def bootloader_reset(self, mode, usb_jtag_serial=False, extra_delay=False):
         """
         Issue a reset-to-bootloader, with USB-JTAG-Serial custom reset sequence option
         """
@@ -516,6 +534,8 @@ class ESPLoader(object):
             time.sleep(0.1)
             self._setDTR(False)
             self._setRTS(False)
+
+        elif mode == 'wdt_reset': self.mysa_WDT_reset()
         else:
             # This fpga delay is for Espressif internal use
             fpga_delay = (
@@ -553,7 +573,7 @@ class ESPLoader(object):
             if not self.USES_RFC2217:  # Might block on rfc2217 ports
                 # Empty serial buffer to isolate boot log
                 self._port.reset_input_buffer()
-            self.bootloader_reset(usb_jtag_serial, extra_delay)
+            self.bootloader_reset(mode, usb_jtag_serial, extra_delay)
 
             # Detect the ROM boot log and check actual boot mode (ESP32 and later only)
             waiting = self._port.inWaiting()
