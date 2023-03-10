@@ -492,19 +492,22 @@ class ESPLoader(object):
         self._setDTR(not state) #inverted logic on serial port IO -> active low
 
     def _set_mysa_PRG_EN(self, state):
-        self._setRTS(not state) #inverted logic on serial port IO -> active low
+        self._setRTS(not state) #inverted logic on serial port IO -> active low 
 
-    def mysa_WDT_reset(self):
+    def mysa_WDT_reset(self, run_mode=False):
         WDT_ENABLE = False     #To assert wdt in enable mode pin is low
         PROGRAM_ENABLE = False #To assert chip in program mode pin is low
 
         self._set_mysa_PRG_EN(PROGRAM_ENABLE)
-        self._set_mysa_WDT_EN(WDT_ENABLE)
-
-        time.sleep(2.0)
+        self._set_mysa_WDT_EN(WDT_ENABLE) 
+        time.sleep(0.05) #prog and wdt together cause esp to reset on v2.4 ftdi assert pin briefly
+        
+        if run_mode: 
+            print("Allowing device to boot...")
+            self._set_mysa_PRG_EN(not PROGRAM_ENABLE)
+        
+        time.sleep(2.24) #let the watchdog timer kick the esp if on old green board programmers
         self._set_mysa_WDT_EN(not WDT_ENABLE)
-        time.sleep(0.1) #issue on some cpus -> https://github.com/empoweredhomes/mysa-esp-idf/commit/d2101cd328f1e589e4c6cd9137c029a64b1bbaa7
-        self._set_mysa_PRG_EN(not PROGRAM_ENABLE)
 
     def bootloader_reset(self, mode, usb_jtag_serial=False, extra_delay=False):
         """

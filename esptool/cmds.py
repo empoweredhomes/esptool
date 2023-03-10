@@ -88,7 +88,8 @@ def detect_chip(
     detect_port = ESPLoader(port, baud, trace_enabled=trace_enabled)
     if detect_port.serial_port.startswith("rfc2217:"):
         detect_port.USES_RFC2217 = True
-    detect_port.connect("wdt_reset", connect_attempts, detecting=True)
+    detect_port.mysa_WDT_reset()
+    detect_port.connect("no_reset", connect_attempts, detecting=True)
         # UnsupportedCommmanddError: ESP8266/ESP32 ROM
         # struct.error: ESP32-S2
         # FatalError: ESP8266/ESP32 STUB
@@ -96,7 +97,7 @@ def detect_chip(
     try:
         # ESP32/ESP8266 are reset after an unsupported command, need to reconnect
         # (not needed on ESP32-S2)
-        print("Detecting chip type...", end="")
+        print("Detecting chip type...\n", end="")
         sys.stdout.flush()
         chip_magic_value = detect_port.read_reg(
             ESPLoader.CHIP_DETECT_MAGIC_REG_ADDR
@@ -116,6 +117,7 @@ def detect_chip(
         )
 
     finally:
+        detect_port.mysa_WDT_reset(run_mode=True)
         if inst is not None:
             print(" %s" % inst.CHIP_NAME, end="")
             if detect_port.sync_stub_detected:
@@ -127,7 +129,6 @@ def detect_chip(
         "Unexpected CHIP magic value 0x%08x. Failed to autodetect chip type."
         % (chip_magic_value)
     )
-
 
 # "Operation" commands, executable at command line. One function each
 #
