@@ -489,10 +489,10 @@ class ESPLoader(object):
         )
 
     def _set_mysa_WDT_EN(self, state):
-        self._setDTR(not state) 
+        self._setDTR(not state) #inverted logic on serial port IO -> active low
 
     def _set_mysa_PRG_EN(self, state):
-        self._setRTS(not state) 
+        self._setRTS(not state) #inverted logic on serial port IO -> active low 
 
     def mysa_WDT_reset(self, run_mode=False):
         WDT_ENABLE = False     #To assert wdt in enable mode pin is low
