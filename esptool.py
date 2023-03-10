@@ -600,7 +600,7 @@ class ESPLoader(object):
             print("Allowing device to boot...")
             self._set_mysa_PRG_EN(not PROGRAM_ENABLE)
         
-        time.sleep(2.0) #let the watchdog timer kick the esp if on old green board programmers
+        time.sleep(2.24) #let the watchdog timer kick the esp if on old green board programmers
         self._set_mysa_WDT_EN(not WDT_ENABLE)
 
     def bootloader_reset(self, mode, usb_jtag_serial=False, extra_delay=False):
