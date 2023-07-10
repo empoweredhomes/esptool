@@ -166,13 +166,9 @@ class EfuseDefineFields(EfuseFieldsBase):
                                                                                                        None),
         ("DIS_DOWNLOAD_MODE",            "security", 0,  4, 0,   "bool",     18,   None, None,         "Disables all Download boot modes", None),
         ("DIS_DIRECT_BOOT",              "config",   0,  4, 1,   "bool",     18,   None, None,         "Disables direct boot mode", None),
-        ("UART_PRINT_CHANNEL",           "config",   0,  4, 2,   "bool",     18,   None, None,         "Selects the default UART for printing boot msg",
-         {0: "UART0",
-          1: "UART1"}),
-        ("FLASH_ECC_MODE",         "flash config",   0,  4, 3,   "bool",     18,   None, None,         "Set this bit to set flsah ecc mode.",
-         {0: "flash ecc 16to18 byte mode",
-          1: "flash ecc 16to17 byte mode"}),
-        ("DIS_USB_DOWNLOAD_MODE",    "usb config",   0,  4, 4,   "bool",     18,   None, None,         "Disables use of USB in UART download boot mode", None),
+        ("DIS_USB_SERIAL_JTAG_ROM_PRINT", "config",  0,  4, 2,   "bool",     18,   None, None,         "Disables USB-Serial-JTAG ROM printing", None),
+        ("DIS_USB_SERIAL_JTAG_DOWNLOAD_MODE", "usb config", 0, 4, 4, "bool", 18,   None, None,         "Disables USB-Serial-JTAG download feature in "
+                                                                                                       "UART download boot mode", None),
         ("ENABLE_SECURITY_DOWNLOAD",   "security",   0,  4, 5,   "bool",     18,   None, None,         "Enables secure UART download mode "
                                                                                                        "(read/write flash only)", None),
         ("UART_PRINT_CONTROL",           "config",   0,  4, 6,   "uint:2",   18,   None, None,         "Sets the default UART boot message output mode",

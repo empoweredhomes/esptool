@@ -10,7 +10,7 @@ import binascii
 import re
 import sys
 
-from bitstring import BitArray, BitString, CreationError
+from bitstring import BitArray, BitStream, CreationError
 
 import esptool
 
@@ -27,13 +27,9 @@ class CheckArgValue(object):
             if efuse.efuse_type.startswith("bool"):
                 new_value = 1 if new_value is None else int(new_value, 0)
                 if new_value != 1:
-                    raise esptool.FatalError(
-                        "New value is not accepted for efuse '{}' "
-                        "(will always burn 0->1), given value={}".format(
-                            efuse.name, new_value
-                        )
-                    )
-            elif efuse.efuse_type.startswith(("int", "uint")):
+                    raise esptool.FatalError("New value is not accepted for efuse '{}' (will always burn 0->1), given value={}"
+                                             .format(efuse.name, new_value))
+            elif efuse.efuse_type.startswith(('int', 'uint')):
                 if efuse.efuse_class == "bitcount":
                     if new_value is None:
                         # find the first unset bit and set it
@@ -47,36 +43,18 @@ class CheckArgValue(object):
                         new_value = int(new_value, 0)
                 else:
                     if new_value is None:
-                        raise esptool.FatalError(
-                            "New value required for efuse '{}' (given None)".format(
-                                efuse.name
-                            )
-                        )
+                        raise esptool.FatalError("New value required for efuse '{}' (given None)".format(efuse.name))
                     new_value = int(new_value, 0)
                     if new_value == 0:
-                        raise esptool.FatalError(
-                            "New value should not be 0 for '{}' "
-                            "(given value= {})".format(efuse.name, new_value)
-                        )
+                        raise esptool.FatalError("New value should not be 0 for '{}' (given value= {})".format(efuse.name, new_value))
             elif efuse.efuse_type.startswith("bytes"):
                 if new_value is None:
-                    raise esptool.FatalError(
-                        "New value required for efuse '{}' "
-                        "(given None)".format(efuse.name)
-                    )
+                    raise esptool.FatalError("New value required for efuse '{}' (given None)".format(efuse.name))
                 if len(new_value) * 8 != efuse.bitarray.len:
-                    raise esptool.FatalError(
-                        "The length of efuse '{}' ({} bits) "
-                        "(given len of the new value= {} bits)".format(
-                            efuse.name, efuse.bitarray.len, len(new_value) * 8
-                        )
-                    )
+                    raise esptool.FatalError("The length of efuse '{}' ({} bits) (given len of the new value= {} bits)"
+                                             .format(efuse.name, efuse.bitarray.len, len(new_value) * 8))
             else:
-                raise esptool.FatalError(
-                    "The '{}' type for the '{}' efuse is not supported yet.".format(
-                        efuse.efuse_type, efuse.name
-                    )
-                )
+                raise esptool.FatalError("The '{}' type for the '{}' efuse is not supported yet.".format(efuse.efuse_type, efuse.name))
             return new_value
 
         efuse = self.efuses[self.name]
@@ -155,14 +133,14 @@ class EfuseBlockBase(EfuseProtectBase):
         self.len = param.len
         self.key_purpose_name = param.key_purpose
         bit_block_len = self.get_block_len() * 8
-        self.bitarray = BitString(bit_block_len)
+        self.bitarray = BitStream(bit_block_len)
         self.bitarray.set(0)
-        self.wr_bitarray = BitString(bit_block_len)
+        self.wr_bitarray = BitStream(bit_block_len)
         self.wr_bitarray.set(0)
         self.fail = False
         self.num_errors = 0
         if self.id == 0:
-            self.err_bitarray = BitString(bit_block_len)
+            self.err_bitarray = BitStream(bit_block_len)
             self.err_bitarray.set(0)
         else:
             self.err_bitarray = None
@@ -336,7 +314,7 @@ class EfuseBlockBase(EfuseProtectBase):
         # in bitstring      = [N] ... [2][1][0]            (to get a correct bitstring
         #                                                   need to reverse new_data)
         # *[x] - means a byte.
-        data = BitString(bytes=new_data[::-1], length=len(new_data) * 8)
+        data = BitStream(bytes=new_data[::-1], length=len(new_data) * 8)
         if self.parent.debug:
             print(
                 "\twritten : {} ->\n\tto write: {}".format(self.get_bitstring(), data)
@@ -563,7 +541,7 @@ class EfuseFieldBase(EfuseProtectBase):
             field_len = int(re.search(r"\d+", self.efuse_type).group())
             if self.efuse_type.startswith("bytes"):
                 field_len *= 8
-        self.bitarray = BitString(field_len)
+        self.bitarray = BitStream(field_len)
         self.bit_len = field_len
         self.bitarray.set(0)
         self.update(self.parent.blocks[self.block].bitarray)

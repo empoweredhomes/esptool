@@ -178,8 +178,6 @@ class EfuseDefineFields(EfuseFieldsBase):
         ("ERR_RST_ENABLE",               "config",   0,  4, 31,  "bool",     19,   None, None,         "Use BLOCK0 to check error record registers",
          {0: "without check",
           1: "with check"}),
-        ("DISABLE_WAFER_VERSION_MAJOR", "config",    0,  5, 0,   "bool",     19,   None, None,         "Disables check of wafer version major", None),
-        ("DISABLE_BLK_VERSION_MAJOR",   "config",    0,  5, 1,   "bool",     19,   None, None,         "Disables check of blk version major", None),
         #
         # Table 53: Parameters in BLOCK1-10
         # Name                          Category  Block Word Pos  Type:len WR_DIS RD_DIS Class         Description                Dictionary
