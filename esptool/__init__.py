@@ -121,7 +121,7 @@ def main(argv=None, esp=None):
     parser.add_argument(
         "--before",
         help="What to do before connecting to the chip",
-        choices=["default_reset", "usb_reset", "no_reset", "no_reset_no_sync"],
+        choices=["default_reset", "usb_reset", "no_reset", "no_reset_no_sync", "wdt_reset"],
         default=os.environ.get("ESPTOOL_BEFORE", "default_reset"),
     )
 
@@ -129,7 +129,7 @@ def main(argv=None, esp=None):
         "--after",
         "-a",
         help="What to do after esptool.py is finished",
-        choices=["hard_reset", "soft_reset", "no_reset", "no_reset_stub"],
+        choices=["hard_reset", "soft_reset", "no_reset", "no_reset_stub", "wdt_reset"],
         default=os.environ.get("ESPTOOL_AFTER", "hard_reset"),
     )
 
