@@ -251,12 +251,6 @@ class ESPLoader(object):
     # Chip IDs that are no longer supported by esptool
     UNSUPPORTED_CHIPS = {6: "ESP32-S3(beta 3)"}
 
-    WDT_ENABLE = True
-    WDT_DISABLE = False
-
-    PROGRAM_ENABLE = True
-    PROGRAM_DISABLE = True
-
     def __init__(self, port=DEFAULT_PORT, baud=ESP_ROM_BAUD, trace_enabled=False):
         """Base constructor for ESPLoader bootloader interaction
 
@@ -494,18 +488,28 @@ class ESPLoader(object):
             "using standard reset sequence.".format(active_port)
         )
 
-    def _set_mysa_PRG_EN(self, state):
-        self._setRTS(state)
-
     def _set_mysa_WDT_EN(self, state):
-        self._setDTR(state)
+        self._setDTR(not state) #inverted logic on serial port IO -> active low
 
-    def mysa_WDT_reset(self):
-        self._set_mysa_WDT_EN(self.WDT_ENABLE)
-        time.sleep(2.0)
-        self._set_mysa_WDT_EN(self.WDT_DISABLE)
+    def _set_mysa_PRG_EN(self, state):
+        self._setRTS(not state) #inverted logic on serial port IO -> active low 
 
-    def bootloader_reset(self,mode, usb_jtag_serial=False, extra_delay=False):
+    def mysa_WDT_reset(self, run_mode=False):
+        WDT_ENABLE = False     #To assert wdt in enable mode pin is low
+        PROGRAM_ENABLE = False #To assert chip in program mode pin is low
+
+        self._set_mysa_PRG_EN(PROGRAM_ENABLE)
+        self._set_mysa_WDT_EN(WDT_ENABLE) 
+        time.sleep(0.05) #prog and wdt together cause esp to reset on v2.4 ftdi assert pin briefly
+        
+        if run_mode: 
+            print("Allowing device to boot...")
+            self._set_mysa_PRG_EN(not PROGRAM_ENABLE)
+        
+        time.sleep(2.24) #let the watchdog timer kick the esp if on old green board programmers
+        self._set_mysa_WDT_EN(not WDT_ENABLE)
+
+    def bootloader_reset(self, mode, usb_jtag_serial=False, extra_delay=False):
         """
         Issue a reset-to-bootloader, with USB-JTAG-Serial custom reset sequence option
         """
@@ -533,10 +537,8 @@ class ESPLoader(object):
             time.sleep(0.1)
             self._setDTR(False)
             self._setRTS(False)
-        elif mode == 'wdt_reset':
-            self._set_mysa_PRG_EN(self.PROGRAM_ENABLE)
-            self.mysa_WDT_reset()
-            self._set_mysa_PRG_EN(self.PROGRAM_DISABLE)
+
+        elif mode == 'wdt_reset': self.mysa_WDT_reset()
         else:
             # This fpga delay is for Espressif internal use
             fpga_delay = (
@@ -574,7 +576,7 @@ class ESPLoader(object):
             if not self.USES_RFC2217:  # Might block on rfc2217 ports
                 # Empty serial buffer to isolate boot log
                 self._port.reset_input_buffer()
-            self.bootloader_reset(mode,usb_jtag_serial, extra_delay)
+            self.bootloader_reset(mode, usb_jtag_serial, extra_delay)
 
             # Detect the ROM boot log and check actual boot mode (ESP32 and later only)
             waiting = self._port.inWaiting()
