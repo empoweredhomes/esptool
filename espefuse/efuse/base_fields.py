@@ -27,9 +27,13 @@ class CheckArgValue(object):
             if efuse.efuse_type.startswith("bool"):
                 new_value = 1 if new_value is None else int(new_value, 0)
                 if new_value != 1:
-                    raise esptool.FatalError("New value is not accepted for efuse '{}' (will always burn 0->1), given value={}"
-                                             .format(efuse.name, new_value))
-            elif efuse.efuse_type.startswith(('int', 'uint')):
+                    raise esptool.FatalError(
+                        "New value is not accepted for efuse '{}' "
+                        "(will always burn 0->1), given value={}".format(
+                            efuse.name, new_value
+                        )
+                    )
+            elif efuse.efuse_type.startswith(("int", "uint")):
                 if efuse.efuse_class == "bitcount":
                     if new_value is None:
                         # find the first unset bit and set it
@@ -43,18 +47,36 @@ class CheckArgValue(object):
                         new_value = int(new_value, 0)
                 else:
                     if new_value is None:
-                        raise esptool.FatalError("New value required for efuse '{}' (given None)".format(efuse.name))
+                        raise esptool.FatalError(
+                            "New value required for efuse '{}' (given None)".format(
+                                efuse.name
+                            )
+                        )
                     new_value = int(new_value, 0)
                     if new_value == 0:
-                        raise esptool.FatalError("New value should not be 0 for '{}' (given value= {})".format(efuse.name, new_value))
+                        raise esptool.FatalError(
+                            "New value should not be 0 for '{}' "
+                            "(given value= {})".format(efuse.name, new_value)
+                        )
             elif efuse.efuse_type.startswith("bytes"):
                 if new_value is None:
-                    raise esptool.FatalError("New value required for efuse '{}' (given None)".format(efuse.name))
+                    raise esptool.FatalError(
+                        "New value required for efuse '{}' "
+                        "(given None)".format(efuse.name)
+                    )
                 if len(new_value) * 8 != efuse.bitarray.len:
-                    raise esptool.FatalError("The length of efuse '{}' ({} bits) (given len of the new value= {} bits)"
-                                             .format(efuse.name, efuse.bitarray.len, len(new_value) * 8))
+                    raise esptool.FatalError(
+                        "The length of efuse '{}' ({} bits) "
+                        "(given len of the new value= {} bits)".format(
+                            efuse.name, efuse.bitarray.len, len(new_value) * 8
+                        )
+                    )
             else:
-                raise esptool.FatalError("The '{}' type for the '{}' efuse is not supported yet.".format(efuse.efuse_type, efuse.name))
+                raise esptool.FatalError(
+                    "The '{}' type for the '{}' efuse is not supported yet.".format(
+                        efuse.efuse_type, efuse.name
+                    )
+                )
             return new_value
 
         efuse = self.efuses[self.name]

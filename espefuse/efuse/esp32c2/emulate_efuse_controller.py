@@ -6,8 +6,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from __future__ import division, print_function
-
 from bitstring import BitStream
 
 import reedsolo
@@ -137,6 +135,8 @@ class EmulateEfuseController(EmulateEfuseControllerBase):
                     ):
                         raw_data = self.read_field(field.name)
                         raw_data.set(0)
-                        block.pos = block.length - (field.word * 32 + field.pos + raw_data.length)
+                        block.pos = block.length - (
+                            field.word * 32 + field.pos + raw_data.length
+                        )
                         block.overwrite(BitStream(raw_data.length))
             self.overwrite_mem_from_block(blk, block)
